@@ -1,9 +1,0 @@
-{
-  "name": "anakuznetzow-reimagined-umbrella",
-  "private": true,
-  "workspaces": ["frontend","backend"],
-  "scripts": {
-    "bootstrap": "npm install --workspaces",
-    "start": "echo \"Start individual workspaces: npm --workspace backend run start & npm --workspace frontend run start\""
-  }
-}

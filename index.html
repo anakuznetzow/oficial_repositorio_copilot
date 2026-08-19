@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Copiloto de Inovação</title>
+  <style>
+    :root{
+      --blue-600:#0b63d8; --blue-700:#094fb0; --bg:#ffffff; --surface:#f5f9ff; --text:#0f172a; --muted:#6b7280;
+      --radius:10px; --gap:16px; --card-shadow: 0 6px 18px rgba(11,99,216,0.08);
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);line-height:1.4}
+    header{background:linear-gradient(90deg,var(--blue-600),var(--blue-700));color:#fff;padding:20px 24px}
+    .container{max-width:1000px;margin:20px auto;padding:0 16px}
+    h1{margin:0;font-size:20px}
+    .tabs{display:flex;gap:8px;margin-top:16px}
+    .tab{background:var(--surface);border-radius:8px;padding:10px 14px;color:var(--blue-700);cursor:pointer;border:1px solid rgba(11,99,216,0.08)}
+    .tab.active{background:#fff;box-shadow:var(--card-shadow);border-color:transparent}
+    .panel{margin-top:20px}
+    .row{display:flex;gap:var(--gap);align-items:flex-start}
+    .col{flex:1}
+    .card{background:#fff;border-radius:var(--radius);padding:14px;border:1px solid #eef4ff;box-shadow:var(--card-shadow)}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    textarea,input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef8;background:transparent}
+    button{background:var(--blue-600);color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer}
+    .btn-ghost{background:transparent;color:var(--blue-700);border:1px solid rgba(11,99,216,0.08)}
+    .cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+    .meta{font-size:13px;color:var(--muted)}
+    .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+    .tag{font-size:12px;padding:6px 8px;border-radius:999px;background:#f1f7ff;color:var(--blue-700);border:1px solid rgba(11,99,216,0.06)}
+    .label{font-weight:600;margin-bottom:6px}
+    .empty{padding:24px;text-align:center;color:var(--muted)}
+    .idea-actions{display:flex;gap:8px;margin-top:10px}
+    .counter{font-size:13px;color:var(--muted);margin-bottom:8px}
+    footer{padding:20px 24px;text-align:center;color:var(--muted);font-size:13px}
+    @media (max-width:600px){.row{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Copiloto de Inovação</h1>
+      <div class="meta">Gere desafios e ideias rápidas — app estático para prototipagem</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <div class="tab active" data-tab="explorar">Explorar desafios</div>
+      <div class="tab" data-tab="gerar">Gerar ideias</div>
+      <div class="tab" data-tab="minhas">Minhas ideias</div>
+    </div>
+
+    <section class="panel" id="explorar-panel">
+      <div class="row">
+        <div class="col card">
+          <div class="label">Área / Tema</div>
+          <textarea id="explorar-theme" rows="3" placeholder="Ex.: Sustentabilidade, logística, experiência do cliente..."></textarea>
+          <div style="height:12px"></div>
+          <div class="controls">
+            <button id="btn-gerar-desafios">Gerar desafios</button>
+            <button class="btn-ghost" id="btn-limpar-desafios">Limpar</button>
+          </div>
+        </div>
+        <div class="col">
+          <div id="desafios-list" class="cards-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="gerar-panel" style="display:none">
+      <div class="card">
+        <div class="label">Gerar ideias</div>
+        <div style="margin-bottom:8px">Preencha o desafio (obrigatório) e opcionalmente contexto, público e restrições.</div>
+        <div style="display:grid;grid-template-columns:1fr 300px;gap:12px">
+          <div>
+            <div style="margin-bottom:8px"><input id="idea-challenge" placeholder="Desafio ou problema (obrigatório)"></div>
+            <div style="margin-bottom:8px"><input id="idea-context" placeholder="Área / contexto"></div>
+            <div style="margin-bottom:8px"><input id="idea-audience" placeholder="Público-alvo"></div>
+            <div style="margin-bottom:8px"><input id="idea-constraints" placeholder="Restrições (opcional)"></div>
+            <div class="controls"><button id="btn-gerar-ideias">Gerar ideias</button><button class="btn-ghost" id="btn-limpar-ideias">Limpar</button></div>
+          </div>
+          <div>
+            <div class="counter" id="ideas-counter" style="text-align:right">Exemplo: 0 ideias geradas</div>
+            <div id="ideas-preview" class="cards-grid"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="minhas-panel" style="display:none">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="label">Minhas ideias</div>
+            <div class="meta" id="minhas-count">0 salvas</div>
+          </div>
+          <div>
+            <button id="btn-export" class="btn-ghost">Exportar JSON</button>
+          </div>
+        </div>
+        <div id="minhas-list" style="margin-top:12px"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>Copiloto de Inovação — Prototipo estático • Visual limpo em azul e branco</footer>
+
+  <script>
+    // Storage helper with localStorage fallback to memory
+    const STORAGE_KEY = 'copiloto_ideas_v1';
+    let memStore = null;
+    function loadSavedIdeas(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(raw) return JSON.parse(raw);
+        return [];
+      }catch(e){
+        memStore = memStore || [];
+        return memStore;
+      }
+    }
+    function saveSavedIdeas(arr){
+      try{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+      }catch(e){ memStore = arr }
+    }
+
+    // Mock AI function
+    function chamarIA(tipo, contexto){
+      // tipo: 'desafios' or 'ideias'
+      const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+      if(tipo==='desafios'){
+        const temas = [
+          {title:`Melhorar ${contexto || 'a experiência do usuário'}`, desc:'Reduzir atrito e aumentar conversão.', why:'Usuários satisfeitos convertem mais.'},
+          {title:`Reduzir custos em ${contexto || 'processos operacionais'}`, desc:'Automatizar tarefas repetitivas.', why:'Reduz custos e aumenta eficiência.'},
+          {title:`Aumentar retenção no ${contexto || 'produto'}`, desc:'Criar mecanismos de engajamento.', why:'Retenção é alavanca de crescimento.'},
+          {title:`Inovar no canal ${contexto || 'digital'}`, desc:'Experimentar novos formatos.', why:'Diferenciação competitiva.'},
+          {title:`Tornar ${contexto || 'a solução'} mais sustentável`, desc:'Reduzir impacto ambiental.', why:'Atende consumidores conscientes.'}
+        ];
+        const count = rand(4,6);
+        const out = [];
+        for(let i=0;i<count;i++) out.push(temas[i % temas.length]);
+        return out;
+      }
+      if(tipo==='ideias'){
+        const c = contexto || {};
+        const base = [
+          {title:`Plataforma de micro-experimentos para ${c.challenge}`, desc:`Um ambiente simples para testar hipóteses com usuários.`, steps:['Mapear hipóteses','Criar teste rápido','Medir resultados'], impact:'Alto', effort:'Médio'},
+          {title:`Programa de incentivos para ${c.audience || 'usuários'}`, desc:`Oferecer recompensas por ações desejadas.`, steps:['Definir KPIs','Criar fluxos','Medir engajamento'], impact:'Médio', effort:'Baixo'},
+          {title:`Workflow automatizado usando templates`, desc:`Templates que reduzem tempo de execução.`, steps:['Coletar rotinas','Criar templates','Rollout gradual'], impact:'Baixo', effort:'Baixo'},
+          {title:`Mentoria cruzada com especialistas`, desc:`Sprints curtos com especialistas para acelerar soluções.`, steps:['Identificar especialistas','Planejar sprints','Executar'], impact:'Médio', effort:'Médio'},
+          {title:`Hackathon interno focado em ${c.context || 'inovação'}`, desc:`Evento para gerar múltiplas ideias em curto prazo.`, steps:['Convocar times','Fornecer dados','Prototipar'], impact:'Alto', effort:'Alto'}
+        ];
+        const count = rand(3,5);
+        const out = [];
+        for(let i=0;i<count;i++){
+          const pick = base[i % base.length];
+          out.push(Object.assign({}, pick));
+        }
+        return out;
+      }
+      return [];
+    }
+
+    // UI helpers
+    function el(tag, props={}, ...children){
+      const e=document.createElement(tag);
+      for(const k in props) if(k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), props[k]); else if(k==='html') e.innerHTML=props[k]; else e.setAttribute(k, props[k]);
+      children.flat().forEach(c=>{ if(c==null) return; e.append(typeof c==='string'?document.createTextNode(c):c) });
+      return e;
+    }
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      const tab = t.dataset.tab;
+      document.getElementById('explorar-panel').style.display = tab==='explorar'? 'block':'none';
+      document.getElementById('gerar-panel').style.display = tab==='gerar'? 'block':'none';
+      document.getElementById('minhas-panel').style.display = tab==='minhas'? 'block':'none';
+    }));
+
+    // Explore handlers
+    const desafiosList = document.getElementById('desafios-list');
+    document.getElementById('btn-gerar-desafios').addEventListener('click', ()=>{
+      const tema = document.getElementById('explorar-theme').value.trim();
+      const desafios = chamarIA('desafios', tema);
+      renderDesafios(desafios);
+    });
+    document.getElementById('btn-limpar-desafios').addEventListener('click', ()=>{desafiosList.innerHTML=''; document.getElementById('explorar-theme').value=''});
+
+    function renderDesafios(items){
+      desafiosList.innerHTML='';
+      if(!items || !items.length){ desafiosList.appendChild(el('div',{class:'empty'},'Nenhum desafio gerado.')) ; return }
+      items.forEach(d=>{
+        const card = el('div',{class:'card'},
+          el('div',{class:'label'}, d.title),
+          el('div',{class:'meta'}, d.desc),
+          el('div',{style':'height:8px'}),
+          el('div',{class:'meta'}, el('strong',{},'Por que importa: '), d.why),
+          el('div',{style':'height:8px'}),
+          el('div',{class:'idea-actions'},
+            el('button',{onClick:()=>{ fillGenerateFromChallenge(d.title); switchToTab('gerar'); }}, 'Gerar ideias para este desafio')
+          )
+        );
+        desafiosList.appendChild(card);
+      });
+    }
+
+    function fillGenerateFromChallenge(title){
+      document.getElementById('idea-challenge').value = title;
+      // focus tab inputs
+      document.getElementById('idea-context').value = document.getElementById('explorar-theme').value || '';
+    }
+
+    function switchToTab(name){
+      document.querySelector(`.tab[data-tab="${name}"]`).click();
+    }
+
+    // Generate ideas handlers
+    const ideasPreview = document.getElementById('ideas-preview');
+    const ideasCounter = document.getElementById('ideas-counter');
+    document.getElementById('btn-gerar-ideias').addEventListener('click', ()=>{
+      const challenge = document.getElementById('idea-challenge').value.trim();
+      if(!challenge){ alert('O campo "Desafio" é obrigatório.'); return }
+      const ctx = { challenge, context: document.getElementById('idea-context').value.trim(), audience: document.getElementById('idea-audience').value.trim(), constraints: document.getElementById('idea-constraints').value.trim() };
+      const ideas = chamarIA('ideias', ctx);
+      renderGeneratedIdeas(ideas);
+    });
+    document.getElementById('btn-limpar-ideias').addEventListener('click', ()=>{ ideasPreview.innerHTML=''; ideasCounter.textContent='Exemplo: 0 ideias geradas'; document.getElementById('idea-challenge').value=''; document.getElementById('idea-context').value=''; document.getElementById('idea-audience').value=''; document.getElementById('idea-constraints').value=''; });
+
+    function renderGeneratedIdeas(list){
+      ideasPreview.innerHTML='';
+      ideasCounter.textContent = `${list.length} ideias geradas`;
+      list.forEach((it, idx)=>{
+        const tags = el('div',{class:'tags'}, el('div',{class:'tag'}, 'Impacto: '+(it.impact||'Médio')), el('div',{class:'tag'}, 'Esforço: '+(it.effort||'Médio')));
+        const steps = el('ol',{}, ...((it.steps||[]).map(s=>el('li',{},s))));
+        const card = el('div',{class:'card'},
+          el('div',{class:'label'}, it.title),
+          el('div',{class:'meta'}, it.desc),
+          tags,
+          el('div',{style:'margin-top:8px'}, el('strong',{},'Primeiros passos:')), steps,
+          el('div',{class:'idea-actions'},
+            el('button',{onClick:()=>saveIdea(Object.assign({id:Date.now()}, it))},'Salvar ideia')
+          )
+        );
+        ideasPreview.appendChild(card);
+      });
+    }
+
+    // Save / My ideas
+    function saveIdea(idea){
+      const arr = loadSavedIdeas();
+      arr.push(idea);
+      saveSavedIdeas(arr);
+      renderSavedList();
+      alert('Ideia salva! Veja em Minhas ideias.');
+    }
+
+    function renderSavedList(){
+      const listEl = document.getElementById('minhas-list');
+      const arr = loadSavedIdeas();
+      document.getElementById('minhas-count').textContent = `${arr.length} salvas`;
+      listEl.innerHTML='';
+      if(!arr.length){ listEl.appendChild(el('div',{class:'empty'},'Você ainda não salvou ideias. Salve ideias da aba "Gerar ideias".')); return }
+      arr.forEach(it=>{
+        const tags = el('div',{class:'tags'}, el('div',{class:'tag'}, 'Impacto: '+(it.impact||'Médio')), el('div',{class:'tag'}, 'Esforço: '+(it.effort||'Médio')));
+        const steps = el('ol',{}, ...((it.steps||[]).map(s=>el('li',{},s))));
+        const card = el('div',{class:'card'},
+          el('div',{class:'label'}, it.title),
+          el('div',{class:'meta'}, it.desc),
+          tags,
+          el('div',{style:'margin-top:8px'}, el('strong',{},'Primeiros passos:')), steps,
+          el('div',{class:'idea-actions'},
+            el('button',{onClick:()=>editIdea(it.id)},'Editar'),
+            el('button',{onClick:()=>deleteIdea(it.id)}, 'Excluir')
+          )
+        );
+        listEl.appendChild(card);
+      });
+    }
+
+    function deleteIdea(id){
+      if(!confirm('Remover esta ideia?')) return;
+      let arr = loadSavedIdeas();
+      arr = arr.filter(x=>x.id!==id);
+      saveSavedIdeas(arr);
+      renderSavedList();
+    }
+
+    function editIdea(id){
+      const arr = loadSavedIdeas();
+      const it = arr.find(x=>x.id===id);
+      if(!it) return alert('Ideia não encontrada');
+      // Simple inline edit prompt for title and desc
+      const newTitle = prompt('Editar título', it.title);
+      if(newTitle===null) return; // cancel
+      const newDesc = prompt('Editar descrição', it.desc);
+      if(newDesc===null) return;
+      it.title = newTitle; it.desc = newDesc;
+      saveSavedIdeas(arr);
+      renderSavedList();
+    }
+
+    // Export
+    document.getElementById('btn-export').addEventListener('click', ()=>{
+      const arr = loadSavedIdeas();
+      const blob = new Blob([JSON.stringify(arr, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='minhas-ideias.json'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    // Initial render
+    renderSavedList();
+
+    // If page loaded with a challenge query param -> prefill
+    (function(){
+      const q = new URLSearchParams(location.search);
+      const pre = q.get('challenge');
+      if(pre){ document.querySelector('.tab[data-tab="gerar"]').click(); document.getElementById('idea-challenge').value=pre }
+    })();
+  </script>
+</body>
+</html>
