@@ -42,19 +42,35 @@
     .counter{font-size:14px;color:var(--muted);margin-bottom:8px}
     .header-controls{display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap}
     /* Header inputs more readable on blue background */
+    .header-controls .field{position:relative}
+    .header-controls .field .icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:16px;opacity:0.9}
     .header-controls input.small-input, .header-controls select.small-input{
-      background:#fff;color:var(--text);border-radius:10px;padding:10px 12px;border:1px solid rgba(10,30,60,0.08);box-shadow:0 6px 18px rgba(10,30,60,0.06);min-width:220px
+      background:#fff;color:var(--text);border-radius:999px;padding:10px 14px 10px 36px;border:1px solid rgba(10,30,60,0.08);box-shadow:0 6px 18px rgba(10,30,60,0.06);min-width:220px
     }
-    /* Make IA toggle clearly visible on header */
-    .header-controls .btn-ghost{background:#fff;color:var(--blue-700);border:1px solid rgba(11,99,216,0.14);padding:10px 14px;border-radius:10px}
-    .header-controls .btn-ghost:hover{background:#f1f7ff}
+    /* Switch */
+    .switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+    .switch input{display:none}
+    .switch .slider{width:48px;height:28px;border-radius:999px;background:#e6eefc;position:relative;display:inline-block}
+    .switch .slider::after{content:'';position:absolute;left:4px;top:4px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .18s}
+    .switch input:checked + .slider{background:var(--color-success)}
+    .switch input:checked + .slider::after{transform:translateX(20px)}
+    .switch .switch-label{font-size:13px;color:var(--surface);margin-left:6px}
+
     /* Tabs on a light bar for contrast */
-    .tabs{background:var(--surface);padding:12px;border-radius:12px;box-shadow:0 8px 20px rgba(10,30,60,0.03)}
-    .tab{background:transparent;border-radius:8px;padding:8px 12px;color:var(--blue-700);cursor:pointer;border:1px solid transparent;opacity:1}
-    .tab.active{background:var(--blue-600);color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(11,99,216,0.12)}
+    .tabs{background:transparent;padding:8px;border-radius:12px;display:flex;align-items:center;gap:8px}
+    .tab{background:transparent;border-radius:8px;padding:10px 14px;color:var(--blue-700);cursor:pointer;border:1px solid rgba(10,30,60,0.03);opacity:1;display:flex;gap:8px;align-items:center}
+    .tab svg,.tab .icon{opacity:0.9}
+    .tab.active{background:#fff;border-color:rgba(10,30,60,0.06);box-shadow:0 6px 18px rgba(11,99,216,0.06);color:var(--blue-700);font-weight:600}
     .small-input{width:320px;max-width:40vw}
     .card .label small{display:block;font-weight:400;color:var(--muted)}
     footer{padding:24px;text-align:center;color:var(--muted);font-size:13px}
+
+    /* cards with sidebar accent */
+    .card--with-sidebar{display:flex;gap:16px;align-items:stretch}
+    .sidebar-accent{width:8px;border-radius:8px;background:linear-gradient(180deg,var(--color-primary),var(--color-primary-dark))}
+    .card-body{flex:1}
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:var(--color-primary-light);color:var(--color-primary-dark);font-weight:600;border:1px solid rgba(11,77,216,0.06)}
+    .cta-full{display:inline-block;width:100%;text-align:center}
 
     /* loading overlay */
     .loading-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(6,12,30,0.5);color:#fff;font-size:16px;z-index:9999}
@@ -73,17 +89,36 @@
 <body>
   <header>
     <div class="container">
-      <h1>Copiloto de Inovação</h1>
-      <div class="meta">Gere desafios e ideias rápidas — app estático para prototipagem</div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div class="brand" style="display:flex;align-items:center;gap:12px">
+          <div class="brand-icon" aria-hidden="true" style="font-size:28px">💡</div>
+          <div>
+            <h1>Copiloto de Inovação</h1>
+            <div class="meta subtitle">Gere desafios e ideias rápidas — app estático para prototipagem</div>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+      </div>
 
-      <div class="header-controls">
-        <input id="ia-key-input" class="small-input" type="password" placeholder="Chave OpenRouter (coloque aqui)" title="Chave OpenRouter" />
-        <select id="ia-model-select" class="small-input" title="Modelo">
-          <option value="openai/gpt-oss-20b:free">openai/gpt-oss-20b:free</option>
-          <option value="google/gemma-4-31b-it:free">google/gemma-4-31b-it:free</option>
-          <option value="nvidia/nemotron-3-ultra-550b-a55b:free">nvidia/nemotron-3-ultra-550b-a55b:free</option>
-        </select>
-        <button id="ia-toggle-btn" class="btn-ghost">Modo IA: Off</button>
+      <div class="header-controls" role="region" aria-label="Configurações IA">
+        <div class="field">
+          <span class="icon" aria-hidden="true">🔑</span>
+          <input id="ia-key-input" class="small-input" type="password" placeholder="Chave OpenRouter (coloque aqui)" title="Chave OpenRouter" />
+        </div>
+        <div class="field">
+          <span class="icon" aria-hidden="true">🧠</span>
+          <select id="ia-model-select" class="small-input" title="Modelo">
+            <option value="openai/gpt-oss-20b:free">openai/gpt-oss-20b:free</option>
+            <option value="google/gemma-4-31b-it:free">google/gemma-4-31b-it:free</option>
+            <option value="nvidia/nemotron-3-ultra-550b-a55b:free">nvidia/nemotron-3-ultra-550b-a55b:free</option>
+          </select>
+        </div>
+
+        <label class="switch" title="Modo IA">
+          <input id="ia-toggle-btn" type="checkbox" aria-label="Ativar IA" />
+          <span class="slider" aria-hidden="true"></span>
+          <span class="switch-label">Modo IA</span>
+        </label>
       </div>
 
     </div>
@@ -323,9 +358,9 @@
       document.getElementById('minhas-panel').style.display = tab==='minhas'? 'block':'none';
     }));
 
-    // Toggle IA button behaviour
+    // Toggle IA (switch) behaviour
     (function(){
-      const btn = document.getElementById('ia-toggle-btn');
+      const toggle = document.getElementById('ia-toggle-btn'); // checkbox
       const keyInput = document.getElementById('ia-key-input');
       const modelSelect = document.getElementById('ia-model-select');
       // restore saved values
@@ -334,11 +369,12 @@
       const savedEnabled = sessionStorage.getItem('ia_enabled') === 'true';
       if(keyInput && !keyInput.value) keyInput.value = savedKey;
       if(modelSelect && savedModel) modelSelect.value = savedModel;
-      btn.textContent = savedEnabled ? 'Modo IA: On' : 'Modo IA: Off';
-      btn.addEventListener('click', ()=>{
-        const now = sessionStorage.getItem('ia_enabled') === 'true';
-        sessionStorage.setItem('ia_enabled', (!now).toString());
-        btn.textContent = (!now) ? 'Modo IA: On' : 'Modo IA: Off';
+      if(toggle) toggle.checked = savedEnabled;
+      function setSwitchVisual(){ const label = toggle?.closest('.switch')?.querySelector('.switch-label'); if(label) label.style.color = toggle.checked ? 'var(--color-success)' : 'var(--surface)'; }
+      setSwitchVisual();
+      toggle?.addEventListener('change', ()=>{
+        sessionStorage.setItem('ia_enabled', (toggle.checked).toString());
+        setSwitchVisual();
       });
       // save key on change
       keyInput?.addEventListener('change', ()=> sessionStorage.setItem('ia_key', keyInput.value.trim()));
@@ -358,14 +394,18 @@
       desafiosList.innerHTML='';
       if(!items || !items.length){ desafiosList.appendChild(el('div',{class:'empty'},'Nenhum desafio gerado.')) ; return }
       items.forEach(d=>{
-        const card = el('div',{class:'card'},
-          el('div',{class:'label'}, d.title),
-          el('div',{class:'meta'}, d.desc),
-          el('div',{style:'height:8px'}),
-          el('div',{class:'meta'}, el('strong',{},'Por que importa: '), d.why),
-          el('div',{style:'height:8px'}),
-          el('div',{class:'idea-actions'},
-            el('button',{onClick:()=>{ fillGenerateFromChallenge(d.title); switchToTab('gerar'); }}, 'Gerar ideias para este desafio')
+        const card = el('div',{class:'card card--with-sidebar'},
+          el('div',{class:'sidebar-accent'}),
+          el('div',{class:'card-body'},
+            el('div',{class:'badge'}, '🎯 Desafio'),
+            el('div',{class:'label'}, d.title),
+            el('div',{class:'meta'}, d.desc),
+            el('div',{style:'height:10px'}),
+            el('div',{class:'meta'}, el('strong',{},'Por que importa: '), d.why),
+            el('div',{style:'height:12px'}),
+            el('div',{class:'idea-actions'},
+              el('button',{class:'cta-full', onClick:()=>{ fillGenerateFromChallenge(d.title); switchToTab('gerar'); }}, 'Gerar ideias para este desafio')
+            )
           )
         );
         desafiosList.appendChild(card);
@@ -399,13 +439,17 @@
       list.forEach((it, idx)=>{
         const tags = el('div',{class:'tags'}, el('div',{class:'tag'}, 'Impacto: '+(it.impact||'Médio')), el('div',{class:'tag'}, 'Esforço: '+(it.effort||'Médio')));
         const steps = el('ol',{}, ...((it.steps||[]).map(s=>el('li',{},s))));
-        const card = el('div',{class:'card'},
-          el('div',{class:'label'}, it.title),
-          el('div',{class:'meta'}, it.desc),
-          tags,
-          el('div',{style:'margin-top:8px'}, el('strong',{},'Primeiros passos:')), steps,
-          el('div',{class:'idea-actions'},
-            el('button',{onClick:()=>saveIdea(Object.assign({id:Date.now()}, it))},'Salvar ideia')
+        const card = el('div',{class:'card card--with-sidebar'},
+          el('div',{class:'sidebar-accent'}),
+          el('div',{class:'card-body'},
+            el('div',{class:'badge'}, '💡 Ideia'),
+            el('div',{class:'label'}, it.title),
+            el('div',{class:'meta'}, it.desc),
+            tags,
+            el('div',{style:'margin-top:8px'}, el('strong',{},'Primeiros passos:')), steps,
+            el('div',{class:'idea-actions'},
+              el('button',{class:'cta-full', onClick:()=>saveIdea(Object.assign({id:Date.now()}, it))},'Salvar ideia')
+            )
           )
         );
         ideasPreview.appendChild(card);
