@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -34,8 +34,10 @@
     .empty{padding:24px;text-align:center;color:var(--muted)}
     .idea-actions{display:flex;gap:8px;margin-top:10px}
     .counter{font-size:13px;color:var(--muted);margin-bottom:8px}
+    .header-controls{display:flex;gap:8px;align-items:center;margin-top:10px}
+    .small-input{width:260px}
     footer{padding:20px 24px;text-align:center;color:var(--muted);font-size:13px}
-    @media (max-width:600px){.row{flex-direction:column}}
+    @media (max-width:600px){.row{flex-direction:column}.small-input{width:100%}}
   </style>
 </head>
 <body>
@@ -43,6 +45,17 @@
     <div class="container">
       <h1>Copiloto de Inovação</h1>
       <div class="meta">Gere desafios e ideias rápidas — app estático para prototipagem</div>
+
+      <div class="header-controls">
+        <input id="ia-key-input" class="small-input" type="password" placeholder="Chave OpenRouter (coloque aqui)" title="Chave OpenRouter" />
+        <select id="ia-model-select" class="small-input" title="Modelo">
+          <option value="openai/gpt-oss-20b:free">openai/gpt-oss-20b:free</option>
+          <option value="google/gemma-4-31b-it:free">google/gemma-4-31b-it:free</option>
+          <option value="nvidia/nemotron-3-ultra-550b-a55b:free">nvidia/nemotron-3-ultra-550b-a55b:free</option>
+        </select>
+        <button id="ia-toggle-btn" class="btn-ghost">Modo IA: Off</button>
+      </div>
+
     </div>
   </header>
 
@@ -129,44 +142,131 @@
       }catch(e){ memStore = arr }
     }
 
-    // Mock AI function
-    function chamarIA(tipo, contexto){
-      // tipo: 'desafios' or 'ideias'
-      const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-      if(tipo==='desafios'){
-        const temas = [
-          {title:`Melhorar ${contexto || 'a experiência do usuário'}`, desc:'Reduzir atrito e aumentar conversão.', why:'Usuários satisfeitos convertem mais.'},
-          {title:`Reduzir custos em ${contexto || 'processos operacionais'}`, desc:'Automatizar tarefas repetitivas.', why:'Reduz custos e aumenta eficiência.'},
-          {title:`Aumentar retenção no ${contexto || 'produto'}`, desc:'Criar mecanismos de engajamento.', why:'Retenção é alavanca de crescimento.'},
-          {title:`Inovar no canal ${contexto || 'digital'}`, desc:'Experimentar novos formatos.', why:'Diferenciação competitiva.'},
-          {title:`Tornar ${contexto || 'a solução'} mais sustentável`, desc:'Reduzir impacto ambiental.', why:'Atende consumidores conscientes.'}
-        ];
-        const count = rand(4,6);
-        const out = [];
-        for(let i=0;i<count;i++) out.push(temas[i % temas.length]);
-        return out;
-      }
-      if(tipo==='ideias'){
-        const c = contexto || {};
-        const base = [
-          {title:`Plataforma de micro-experimentos para ${c.challenge}`, desc:`Um ambiente simples para testar hipóteses com usuários.`, steps:['Mapear hipóteses','Criar teste rápido','Medir resultados'], impact:'Alto', effort:'Médio'},
-          {title:`Programa de incentivos para ${c.audience || 'usuários'}`, desc:`Oferecer recompensas por ações desejadas.`, steps:['Definir KPIs','Criar fluxos','Medir engajamento'], impact:'Médio', effort:'Baixo'},
-          {title:`Workflow automatizado usando templates`, desc:`Templates que reduzem tempo de execução.`, steps:['Coletar rotinas','Criar templates','Rollout gradual'], impact:'Baixo', effort:'Baixo'},
-          {title:`Mentoria cruzada com especialistas`, desc:`Sprints curtos com especialistas para acelerar soluções.`, steps:['Identificar especialistas','Planejar sprints','Executar'], impact:'Médio', effort:'Médio'},
-          {title:`Hackathon interno focado em ${c.context || 'inovação'}`, desc:`Evento para gerar múltiplas ideias em curto prazo.`, steps:['Convocar times','Fornecer dados','Prototipar'], impact:'Alto', effort:'Alto'}
-        ];
-        const count = rand(3,5);
-        const out = [];
-        for(let i=0;i<count;i++){
-          const pick = base[i % base.length];
-          out.push(Object.assign({}, pick));
+    // Single AI function: attempts OpenRouter when enabled and key present; otherwise falls back to mock
+    async function chamarIA(tipo, contexto){
+      // Read key and model from inputs with fallback to sessionStorage
+      const keyInput = document.getElementById('ia-key-input');
+      const modelSelect = document.getElementById('ia-model-select');
+      const iaKey = (keyInput && keyInput.value?.trim()) || sessionStorage.getItem('ia_key') || '';
+      const model = (modelSelect && modelSelect.value) || sessionStorage.getItem('ia_model') || 'openai/gpt-oss-20b:free';
+      // persist preferences
+      sessionStorage.setItem('ia_key', iaKey);
+      sessionStorage.setItem('ia_model', model);
+
+      const iaEnabled = sessionStorage.getItem('ia_enabled') === 'true';
+
+      // Helper: local mock (previous mock behaviour)
+      function mockResposta(){
+        const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+        if(tipo==='desafios'){
+          const temas = [
+            {title:`Melhorar ${contexto || 'a experiência do usuário'}`, desc:'Reduzir atrito e aumentar conversão.', why:'Usuários satisfeitos convertem mais.'},
+            {title:`Reduzir custos em ${contexto || 'processos operacionais'}`, desc:'Automatizar tarefas repetitivas.', why:'Reduz custos e aumenta eficiência.'},
+            {title:`Aumentar retenção no ${contexto || 'produto'}`, desc:'Criar mecanismos de engajamento.', why:'Retenção é alavanca de crescimento.'},
+            {title:`Inovar no canal ${contexto || 'digital'}`, desc:'Experimentar novos formatos.', why:'Diferenciação competitiva.'},
+            {title:`Tornar ${contexto || 'a solução'} mais sustentável`, desc:'Reduzir impacto ambiental.', why:'Atende consumidores conscientes.'}
+          ];
+          const count = rand(4,6);
+          const out = [];
+          for(let i=0;i<count;i++) out.push(temas[i % temas.length]);
+          return out;
         }
-        return out;
+        if(tipo==='ideias'){
+          const c = contexto || {};
+          const base = [
+            {title:`Plataforma de micro-experimentos para ${c.challenge}`, desc:`Um ambiente simples para testar hipóteses com usuários.`, steps:['Mapear hipóteses','Criar teste rápido','Medir resultados'], impact:'Alto', effort:'Médio'},
+            {title:`Programa de incentivos para ${c.audience || 'usuários'}`, desc:`Oferecer recompensas por ações desejadas.`, steps:['Definir KPIs','Criar fluxos','Medir engajamento'], impact:'Médio', effort:'Baixo'},
+            {title:`Workflow automatizado usando templates`, desc:`Templates que reduzem tempo de execução.`, steps:['Coletar rotinas','Criar templates','Rollout gradual'], impact:'Baixo', effort:'Baixo'},
+            {title:`Mentoria cruzada com especialistas`, desc:`Sprints curtos com especialistas para acelerar soluções.`, steps:['Identificar especialistas','Planejar sprints','Executar'], impact:'Médio', effort:'Médio'},
+            {title:`Hackathon interno focado em ${c.context || 'inovação'}`, desc:`Evento para gerar múltiplas ideias em curto prazo.`, steps:['Convocar times','Fornecer dados','Prototipar'], impact:'Alto', effort:'Alto'}
+          ];
+          const count = rand(3,5);
+          const out = [];
+          for(let i=0;i<count;i++){
+            const pick = base[i % base.length];
+            out.push(Object.assign({}, pick));
+          }
+          return out;
+        }
+        return [];
       }
-      return [];
+
+      // If IA off or missing key -> fallback to mock
+      if(!iaEnabled || !iaKey){
+        return mockResposta();
+      }
+
+      // Build prompt instructing the model to reply ONLY with a JSON array
+      let prompt = '';
+      if(tipo==='desafios'){
+        prompt = `Gere entre 4 e 6 desafios para o tema: "${contexto || ''}". Responda SOMENTE com um array JSON. Cada item deve ter as chaves: title (string), desc (string), why (string). Não inclua texto adicional, nem marcações em Markdown, apenas o JSON array.`;
+      } else if(tipo==='ideias'){
+        const c = contexto || {};
+        prompt = `Para o desafio: "${c.challenge || ''}" (contexto: "${c.context || ''}", público: "${c.audience || ''}", restrições: "${c.constraints || ''}"), gere entre 3 e 5 ideias. Responda SOMENTE com um array JSON. Cada item deve ter: title (string), desc (string), steps (array de strings), impact (Alto/Médio/Baixo), effort (Alto/Médio/Baixo). Apenas o JSON array, sem explicações.`;
+      }
+
+      // Show loading indicator in appropriate area
+      try{
+        if(tipo==='desafios'){
+          const cont = document.getElementById('desafios-list'); if(cont){ cont.innerHTML = '<div class="empty">Carregando...</div>'; }
+        } else if(tipo==='ideias'){
+          const cont = document.getElementById('ideas-preview'); if(cont){ cont.innerHTML = '<div class="empty">Carregando...</div>'; }
+        }
+
+        const endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+        const body = { model, messages:[{ role: 'user', content: prompt }] };
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + iaKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        if(res.status===401){ alert('Chave inválida (401). Usando modo mock.'); return mockResposta(); }
+        if(res.status===429){ alert('Limite de requisições (429). Usando modo mock.'); return mockResposta(); }
+        if(!res.ok){ alert('Erro na requisição à IA ('+res.status+'). Usando modo mock.'); return mockResposta(); }
+
+        const data = await res.json();
+        // OpenRouter may return content at choices[0].message.content or choices[0].text
+        const raw = (data?.choices?.[0]?.message?.content) || (data?.choices?.[0]?.text) || '';
+        if(!raw){ alert('Resposta da IA vazia. Usando mock.'); return mockResposta(); }
+        // Remove markdown fences
+        let cleaned = raw.replace(/```/g,'').trim();
+        // Find first JSON array in the text
+        const firstIdx = cleaned.indexOf('[');
+        const lastIdx = cleaned.lastIndexOf(']');
+        if(firstIdx===-1 || lastIdx===-1 || lastIdx<firstIdx){
+          alert('Formato inesperado da resposta da IA. Usando mock.');
+          return mockResposta();
+        }
+        const jsonText = cleaned.slice(firstIdx, lastIdx+1);
+        let parsed;
+        try{
+          parsed = JSON.parse(jsonText);
+        }catch(e){
+          alert('Falha ao parsear JSON da IA. Usando mock.');
+          return mockResposta();
+        }
+
+        // Ensure steps is array for each idea
+        if(Array.isArray(parsed)){
+          parsed.forEach(it=>{
+            if(it && it.steps && !Array.isArray(it.steps)) it.steps = [String(it.steps)];
+          });
+          return parsed;
+        }
+
+        alert('Resposta da IA sem formato esperado. Usando mock.');
+        return mockResposta();
+
+      }catch(err){
+        console.error('Erro ao chamar IA:', err);
+        alert('Erro de rede ou inesperado ao chamar a IA. Usando mock.');
+        return mockResposta();
+      }
     }
 
-    // UI helpers
+    // UI helper
     function el(tag, props={}, ...children){
       const e=document.createElement(tag);
       for(const k in props) if(k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), props[k]); else if(k==='html') e.innerHTML=props[k]; else e.setAttribute(k, props[k]);
@@ -184,11 +284,33 @@
       document.getElementById('minhas-panel').style.display = tab==='minhas'? 'block':'none';
     }));
 
+    // Toggle IA button behaviour
+    (function(){
+      const btn = document.getElementById('ia-toggle-btn');
+      const keyInput = document.getElementById('ia-key-input');
+      const modelSelect = document.getElementById('ia-model-select');
+      // restore saved values
+      const savedKey = sessionStorage.getItem('ia_key') || '';
+      const savedModel = sessionStorage.getItem('ia_model') || '';
+      const savedEnabled = sessionStorage.getItem('ia_enabled') === 'true';
+      if(keyInput && !keyInput.value) keyInput.value = savedKey;
+      if(modelSelect && savedModel) modelSelect.value = savedModel;
+      btn.textContent = savedEnabled ? 'Modo IA: On' : 'Modo IA: Off';
+      btn.addEventListener('click', ()=>{
+        const now = sessionStorage.getItem('ia_enabled') === 'true';
+        sessionStorage.setItem('ia_enabled', (!now).toString());
+        btn.textContent = (!now) ? 'Modo IA: On' : 'Modo IA: Off';
+      });
+      // save key on change
+      keyInput?.addEventListener('change', ()=> sessionStorage.setItem('ia_key', keyInput.value.trim()));
+      modelSelect?.addEventListener('change', ()=> sessionStorage.setItem('ia_model', modelSelect.value));
+    })();
+
     // Explore handlers
     const desafiosList = document.getElementById('desafios-list');
-    document.getElementById('btn-gerar-desafios').addEventListener('click', ()=>{
+    document.getElementById('btn-gerar-desafios').addEventListener('click', async ()=>{
       const tema = document.getElementById('explorar-theme').value.trim();
-      const desafios = chamarIA('desafios', tema);
+      const desafios = await chamarIA('desafios', tema);
       renderDesafios(desafios);
     });
     document.getElementById('btn-limpar-desafios').addEventListener('click', ()=>{desafiosList.innerHTML=''; document.getElementById('explorar-theme').value=''});
@@ -213,7 +335,6 @@
 
     function fillGenerateFromChallenge(title){
       document.getElementById('idea-challenge').value = title;
-      // focus tab inputs
       document.getElementById('idea-context').value = document.getElementById('explorar-theme').value || '';
     }
 
@@ -224,11 +345,11 @@
     // Generate ideas handlers
     const ideasPreview = document.getElementById('ideas-preview');
     const ideasCounter = document.getElementById('ideas-counter');
-    document.getElementById('btn-gerar-ideias').addEventListener('click', ()=>{
+    document.getElementById('btn-gerar-ideias').addEventListener('click', async ()=>{
       const challenge = document.getElementById('idea-challenge').value.trim();
       if(!challenge){ alert('O campo "Desafio" é obrigatório.'); return }
       const ctx = { challenge, context: document.getElementById('idea-context').value.trim(), audience: document.getElementById('idea-audience').value.trim(), constraints: document.getElementById('idea-constraints').value.trim() };
-      const ideas = chamarIA('ideias', ctx);
+      const ideas = await chamarIA('ideias', ctx);
       renderGeneratedIdeas(ideas);
     });
     document.getElementById('btn-limpar-ideias').addEventListener('click', ()=>{ ideasPreview.innerHTML=''; ideasCounter.textContent='Exemplo: 0 ideias geradas'; document.getElementById('idea-challenge').value=''; document.getElementById('idea-context').value=''; document.getElementById('idea-audience').value=''; document.getElementById('idea-constraints').value=''; });
@@ -296,9 +417,8 @@
       const arr = loadSavedIdeas();
       const it = arr.find(x=>x.id===id);
       if(!it) return alert('Ideia não encontrada');
-      // Simple inline edit prompt for title and desc
       const newTitle = prompt('Editar título', it.title);
-      if(newTitle===null) return; // cancel
+      if(newTitle===null) return;
       const newDesc = prompt('Editar descrição', it.desc);
       if(newDesc===null) return;
       it.title = newTitle; it.desc = newDesc;
@@ -316,13 +436,6 @@
 
     // Initial render
     renderSavedList();
-
-    // If page loaded with a challenge query param -> prefill
-    (function(){
-      const q = new URLSearchParams(location.search);
-      const pre = q.get('challenge');
-      if(pre){ document.querySelector('.tab[data-tab="gerar"]').click(); document.getElementById('idea-challenge').value=pre }
-    })();
   </script>
 </body>
 </html>
