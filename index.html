@@ -40,7 +40,18 @@
     .empty{padding:28px;text-align:center;color:var(--muted);font-size:15px}
     .idea-actions{display:flex;gap:10px;margin-top:12px}
     .counter{font-size:14px;color:var(--muted);margin-bottom:8px}
-    .header-controls{display:flex;gap:10px;align-items:center;margin-top:12px}
+    .header-controls{display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap}
+    /* Header inputs more readable on blue background */
+    .header-controls input.small-input, .header-controls select.small-input{
+      background:#fff;color:var(--text);border-radius:10px;padding:10px 12px;border:1px solid rgba(10,30,60,0.08);box-shadow:0 6px 18px rgba(10,30,60,0.06);min-width:220px
+    }
+    /* Make IA toggle clearly visible on header */
+    .header-controls .btn-ghost{background:#fff;color:var(--blue-700);border:1px solid rgba(11,99,216,0.14);padding:10px 14px;border-radius:10px}
+    .header-controls .btn-ghost:hover{background:#f1f7ff}
+    /* Tabs on a light bar for contrast */
+    .tabs{background:var(--surface);padding:12px;border-radius:12px;box-shadow:0 8px 20px rgba(10,30,60,0.03)}
+    .tab{background:transparent;border-radius:8px;padding:8px 12px;color:var(--blue-700);cursor:pointer;border:1px solid transparent;opacity:1}
+    .tab.active{background:var(--blue-600);color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(11,99,216,0.12)}
     .small-input{width:320px;max-width:40vw}
     .card .label small{display:block;font-weight:400;color:var(--muted)}
     footer{padding:24px;text-align:center;color:var(--muted);font-size:13px}
