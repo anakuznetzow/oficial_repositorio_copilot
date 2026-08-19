@@ -6,8 +6,8 @@
   <title>Copiloto de Inovação</title>
   <style>
     :root{
-      --blue-600:#0b63d8; --blue-700:#063a87; --bg:#f7fbff; --surface:#ffffff; --text:#0b1220; --muted:#556277;
-      --radius:12px; --gap:18px; --card-shadow: 0 8px 30px rgba(8,40,80,0.06);
+      --blue-600:#0b63d8; --blue-700:#063a87; --bg:#f3f6fb; --surface:#ffffff; --text:#0b1220; --muted:#4b5563;
+      --radius:12px; --gap:18px; --card-shadow: 0 8px 28px rgba(8,40,80,0.07);
       font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
       --focus: 3px solid rgba(11,99,216,0.18);
     }
@@ -18,20 +18,21 @@
     .container{max-width:1100px;margin:20px auto;padding:0 18px}
     h1{margin:0;font-size:20px;font-weight:700}
     .tabs{display:flex;gap:10px;margin-top:18px}
-    .tab{background:transparent;border-radius:10px;padding:10px 14px;color:var(--surface);cursor:pointer;border:1px solid transparent;opacity:0.95}
-    .tab.active{background:rgba(255,255,255,0.12);box-shadow:none;border-color:rgba(255,255,255,0.06);font-weight:600}
+    .tab{background:transparent;border-radius:10px;padding:10px 14px;color:#eaf4ff;cursor:pointer;border:1px solid transparent;opacity:0.95}
+    .tab.active{background:#fff;border-radius:10px;color:var(--blue-700);box-shadow:0 6px 18px rgba(11,99,216,0.06);font-weight:600}
     .panel{margin-top:22px}
     .row{display:flex;gap:var(--gap);align-items:flex-start}
     .col{flex:1}
     .card{background:var(--surface);border-radius:var(--radius);padding:18px;border:1px solid rgba(10,30,60,0.04);box-shadow:var(--card-shadow)}
     .controls{display:flex;gap:10px;flex-wrap:wrap}
-    textarea,input,select{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(10,30,60,0.06);background:linear-gradient(180deg,#fff,#fbfdff)}
-    textarea{min-height:84px}
+    textarea,input,select{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(10,30,60,0.06);background:linear-gradient(180deg,#fff,#fbfdff);font-size:14px}
+    textarea{min-height:100px}
     button{background:var(--blue-600);color:#fff;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
+    button[disabled]{opacity:0.6;cursor:default}
     button:hover{background:var(--blue-700)}
     button:focus{outline:var(--focus)}
     .btn-ghost{background:transparent;color:var(--blue-700);border:1px solid rgba(11,99,216,0.12)}
-    .cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+    .cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
     .meta{font-size:14px;color:var(--muted)}
     .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
     .tag{font-size:12px;padding:6px 10px;border-radius:999px;background:#eaf4ff;color:var(--blue-700);border:1px solid rgba(11,99,216,0.06)}
@@ -43,6 +44,12 @@
     .small-input{width:320px;max-width:40vw}
     .card .label small{display:block;font-weight:400;color:var(--muted)}
     footer{padding:24px;text-align:center;color:var(--muted);font-size:13px}
+
+    /* loading overlay */
+    .loading-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(6,12,30,0.5);color:#fff;font-size:16px;z-index:9999}
+    .loading-overlay .box{background:rgba(255,255,255,0.06);padding:18px 22px;border-radius:12px;display:flex;gap:12px;align-items:center}
+    .loading-overlay .spinner{width:36px;height:36px;border:4px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
     /* accessibility */
     input:focus, textarea:focus, select:focus { box-shadow: var(--focus); outline: none }
@@ -132,6 +139,8 @@
 
   </main>
 
+  <div id="loading-overlay" class="loading-overlay" style="display:none" aria-hidden="true"><div class="box"><div class="spinner" aria-hidden="true"></div><div>Carregando…</div></div></div>
+
   <footer>Copiloto de Inovação — Prototipo estático • Visual limpo em azul e branco</footer>
 
   <script>
@@ -153,6 +162,10 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
       }catch(e){ memStore = arr }
     }
+
+    // Loading overlay control
+    function showLoading(){ const ol = document.getElementById('loading-overlay'); if(ol){ ol.style.display='flex'; ol.setAttribute('aria-hidden','false'); } }
+    function hideLoading(){ const ol = document.getElementById('loading-overlay'); if(ol){ ol.style.display='none'; ol.setAttribute('aria-hidden','true'); } }
 
     // Single AI function: attempts OpenRouter when enabled and key present; otherwise falls back to mock
     async function chamarIA(tipo, contexto){
@@ -218,13 +231,14 @@
       }
 
       // Show loading indicator in appropriate area
-      try{
-        if(tipo==='desafios'){
-          const cont = document.getElementById('desafios-list'); if(cont){ cont.innerHTML = '<div class="empty">Carregando...</div>'; }
-        } else if(tipo==='ideias'){
-          const cont = document.getElementById('ideas-preview'); if(cont){ cont.innerHTML = '<div class="empty">Carregando...</div>'; }
-        }
+      if(tipo==='desafios'){
+        const cont = document.getElementById('desafios-list'); if(cont){ cont.innerHTML = '<div class="empty">Carregando...</div>'; }
+      } else if(tipo==='ideias'){
+        const cont = document.getElementById('ideas-preview'); if(cont){ cont.innerHTML = '<div class="empty">Carregando...</div>'; }
+      }
 
+      showLoading();
+      try{
         const endpoint = 'https://openrouter.ai/api/v1/chat/completions';
         const body = { model, messages:[{ role: 'user', content: prompt }] };
 
@@ -275,6 +289,8 @@
         console.error('Erro ao chamar IA:', err);
         alert('Erro de rede ou inesperado ao chamar a IA. Usando mock.');
         return mockResposta();
+      } finally{
+        hideLoading();
       }
     }
 
