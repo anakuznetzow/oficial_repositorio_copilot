@@ -322,9 +322,9 @@
         const card = el('div',{class:'card'},
           el('div',{class:'label'}, d.title),
           el('div',{class:'meta'}, d.desc),
-          el('div',{style':'height:8px'}),
+          el('div',{style:'height:8px'}),
           el('div',{class:'meta'}, el('strong',{},'Por que importa: '), d.why),
-          el('div',{style':'height:8px'}),
+          el('div',{style:'height:8px'}),
           el('div',{class:'idea-actions'},
             el('button',{onClick:()=>{ fillGenerateFromChallenge(d.title); switchToTab('gerar'); }}, 'Gerar ideias para este desafio')
           )
